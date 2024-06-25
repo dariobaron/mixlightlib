@@ -1,3 +1,10 @@
+# Hidden directories
+.*/
+
+# Temporary files and directories
+tmp/
+tmp.*
+
 # Prerequisites
 *.d
 
