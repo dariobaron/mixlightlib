@@ -40,7 +40,7 @@ public:
 
 template<Callable Function>
 RootFinder<Function>::RootFinder(Function function, double a, double b)
-				: function_(function), a_(a), b_(b), solver_type_(SolverMethods::Brent), computed_(false), default_stopper_(true) {
+				: function_(function), a_(a), b_(b), solver_type_(SolverMethods::Brent), root_(std::numeric_limits<double>::quiet_NaN()), computed_(false), default_stopper_(true) {
 	if (a_ == b_){
 		throw std::runtime_error("The interval endpoints cannot be equal!");
 	}

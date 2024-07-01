@@ -5,6 +5,7 @@
 
 class Stopper{
 public:
+	virtual ~Stopper() {};
 	virtual bool operator()(double xold, double xnew) = 0;
 	virtual unsigned iterations() const = 0;
 };

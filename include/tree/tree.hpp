@@ -20,7 +20,7 @@ class Tree{
 	double B2_, B2norm_;
 public:
 	Tree(std::vector<Edge> & edges);
-	Tree(Edge * ptr, unsigned n);
+	Tree(const Edge * ptr, unsigned n);
 	template<typename RndEng>
 	static std::vector<Edge> generateYuleEdges(RndEng & rng, unsigned nL);
 	std::vector<unsigned>& computeDepths();
@@ -33,7 +33,7 @@ public:
 Tree::Tree(std::vector<Edge> & edges) : Tree(edges.data(), edges.size()) {};
 
 
-Tree::Tree(Edge * ptr, unsigned n) : nodes_(n+1), B2_(-1), B2norm_(-1) {
+Tree::Tree(const Edge * ptr, unsigned n) : nodes_(n+1), B2_(-1), B2norm_(-1) {
 	if (ptr->parent != 0){
 		throw std::runtime_error("Edgelist must be sorted and begin with the root node Id = 0");
 	}
