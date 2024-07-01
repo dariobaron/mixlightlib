@@ -63,6 +63,7 @@ RootFinder<Function>::RootFinder(Function function, double a, double b, double r
 
 template<Callable Function>
 RootFinder<Function>::RootFinder(Function function, double a, double b, Stopper * tol) : RootFinder(function, a, b) {
+	delete tol_;
 	tol_ = tol;
 	default_stopper_ = false;
 }
@@ -71,6 +72,13 @@ RootFinder<Function>::RootFinder(Function function, double a, double b, Stopper 
 template<Callable Function>
 RootFinder<Function>::~RootFinder(){
 	if (default_stopper_)	{	delete tol_;	}
+}
+
+
+template<Callable Function>
+void RootFinder<Function>::setSolver(std::string method){
+	if (method == "brent")	{	solver_type_ = SolverMethods::Brent;	}
+	else					{	throw std::runtime_error("Solver type "+method+" is not implemented");	}
 }
 
 
