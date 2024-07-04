@@ -31,3 +31,18 @@ public:
 		return a / (a + b) * scale_ - x0_;
 	}
 };
+
+
+template<typename T>
+class TwoPointDistribution{
+	std::bernoulli_distribution distr_;
+	T val1_;
+	T val2_;
+public:
+	TwoPointDistribution(double p=0.5, T val1=0, T val2=1) : distr_(p), val1_(val1), val2_(val2) {};
+	template<typename RndEng>
+	T operator()(RndEng & eng){
+		if (distr_(eng))	{	return val1_;	}
+		else				{	return val2_;	}
+	};
+};
