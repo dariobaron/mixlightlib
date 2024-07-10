@@ -142,7 +142,7 @@ std::vector<unsigned>& Tree::computeNLeavesSubtree(){
 		}
 		unsigned already_computed = leaves_.size();
 		const Node * current = nodes_.data();
-		while (already_computed == nodes_.size()){
+		while (already_computed != nodes_.size()){
 			unsigned nChildren = current->nChildren();
 			if (nChildren == 0){
 				current = current->parent();
@@ -164,12 +164,15 @@ std::vector<unsigned>& Tree::computeNLeavesSubtree(){
 					Node::ID idx = std::distance(std::as_const(nodes_).data(), current);
 					nL_subtree_[idx] = nL;
 					++already_computed;
+					current = current->parent();
 				}
 			}
 		}
+		// check that can eventually be removed
 		for (auto & nL : nL_subtree_){
 			if (nL == 0)	{	throw std::runtime_error("Algorithm failed");	}
 		}
+		// end check
 	}
 	return nL_subtree_;
 }
