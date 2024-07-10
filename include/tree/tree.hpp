@@ -35,6 +35,7 @@ public:
 	double computeB2Norm();
 	unsigned long computeCophenetic();
 	double computeCopheneticNorm();
+	std::vector<unsigned> computeNChildrenPerNode() const;
 private:
 	std::vector<Node> initNodes(const Edge * ptr, unsigned n);
 	std::set<Node::ID> initLeaves(const std::vector<Node> & nodes);
@@ -226,6 +227,15 @@ double Tree::computeCopheneticNorm(){
 		cophnorm_ = coph / binomCoeff(leaves_.size(), 3);
 	}
 	return cophnorm_;
+}
+
+
+std::vector<unsigned> Tree::computeNChildrenPerNode() const{
+	std::vector<unsigned> nchildren(nodes_.size());
+	for (unsigned i = 0; i < nodes_.size(); ++i){
+		nchildren[i] = nodes_[i].nChildren();
+	}
+	return nchildren;
 }
 
 

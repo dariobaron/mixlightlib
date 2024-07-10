@@ -44,5 +44,5 @@ public:
 	T operator()(RndEng & eng){
 		if (distr_(eng))	{	return val1_;	}
 		else				{	return val2_;	}
-	};
+	}
 };
