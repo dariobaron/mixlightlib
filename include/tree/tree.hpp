@@ -24,6 +24,7 @@ class Tree{
 public:
 	Tree(const std::vector<Edge> & edges);
 	Tree(const Edge * ptr, unsigned n);
+	const std::vector<Node>& getNodes() const;
 	template<typename RndEng>
 	static std::vector<Edge> generateYuleEdges(RndEng & rng, unsigned nL);
 	template<typename RndEng>
@@ -46,6 +47,11 @@ Tree::Tree(const std::vector<Edge> & edges) : Tree(edges.data(), edges.size()) {
 
 
 Tree::Tree(const Edge * ptr, unsigned n) : nodes_(initNodes(ptr,n)), leaves_(initLeaves(nodes_)), B2_(-1), B2norm_(-1), coph_(-1), cophnorm_(-1) {}
+
+
+const std::vector<Node>& Tree::getNodes() const{
+	return nodes_;
+}
 
 
 template<typename RngEng>
