@@ -228,20 +228,19 @@ std::vector<unsigned> Tree::computeNChildrenPerNode() const{
 std::vector<Node> Tree::initNodes(const Edge * ptr, unsigned n){
 	std::vector<Node> nodes(n+1);
 	if (ptr->parent != 0){
-		throw std::runtime_error("Edgelist must be sorted and begin with the root node Id = 0");
+		throw std::runtime_error("Edgelist must be begin with the root node Id = 0");
 	}
 	nodes[0].id(0);
 	for (unsigned i = 0; i < n; ++i){
 		Edge edge = ptr[i];
-		if ((edge.parent >= edge.child) || (edge.child > i+1)){
-			throw std::runtime_error("Tree edgelist ill-formed!");
-		}
-		if (nodes[edge.parent].id() != edge.parent){
-			throw std::runtime_error("Error in the algorithm!");
-		}
+		if (edge.parent >= edge.child)	{	throw std::runtime_error("Tree edgelist ill-formed!");	}
+		else if (edge.child > n)		{	throw std::runtime_error("Tree edgelist ill-formed!");	}
 		nodes[edge.child].id(edge.child);
 		nodes[edge.parent].child(&nodes[edge.child]);
 		nodes[edge.child].parent(&nodes[edge.parent]);
+	}
+	for (unsigned i = 0; i < nodes.size(); ++i){
+		if (nodes[i].id() != i)	{	throw std::runtime_error("Edgelist is incomplete, some nodes are missing");	}
 	}
 	return nodes;
 }
