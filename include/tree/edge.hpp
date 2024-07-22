@@ -13,5 +13,5 @@ struct Edge{
 
 
 bool operator<(const Edge & lhs, const Edge & rhs){
-	return std::tie(lhs.parent, rhs.child) < std::tie(rhs.parent, rhs.child);
+	return std::tie(lhs.parent, lhs.child) < std::tie(rhs.parent, rhs.child);
 }
