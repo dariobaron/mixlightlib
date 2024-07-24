@@ -53,6 +53,7 @@ class DiscreteDistribution{
 	std::discrete_distribution<unsigned> distr_;
 	std::vector<T> values_;
 public:
+	DiscreteDistribution() = default;
 	DiscreteDistribution(const std::vector<double> & probs) : distr_(probs.begin(), probs.end()), values_() {};
 	DiscreteDistribution(const std::vector<double> & probs, const std::vector<T> & values) : distr_(probs.begin(), probs.end()), values_(values) {};
 	DiscreteDistribution(std::initializer_list<double> probs) : distr_(probs), values_() {};
