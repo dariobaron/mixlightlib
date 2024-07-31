@@ -201,11 +201,23 @@ double Tree::computeB2Norm(){
 	if (B2norm_ == -1){
 		double B2 = computeB2();
 		unsigned nL = leaves_.size();
-		auto function = [B2,nL](double b){ return -B2 + 2*(b-1)/(b+0.0918) + std::log2(nL)/b; };
-		RootFinder finder(function, std::log2(nL)/B2, std::log2(nL)/(B2-2*(1-std::pow(2,1-nL))));
-		double b = finder.root();
-		double log2e = 1 / std::log(2);
-		B2norm_ = std::pow(2, (-b+1)/(log2e-1));
+		if (nL <= 4){
+			B2norm_ = -1;	
+		}
+		else if (B2 <= 2 * (1 - std::pow(2,1-nL)) + 1e-5){
+			B2norm_ = 0;
+		}
+		else{
+			double log2nL = std::log2(nL);
+			auto function = [B2,log2nL](double b){ return -B2 + 2*(b-1)/(b+0.0918) + log2nL/b; };
+			RootFinder finder(function, log2nL/B2, log2nL/(B2-2*(1-std::pow(2,1-nL))));
+			double b = finder.root();
+			double log2e = 1 / std::log(2);
+			double result = std::pow(2, (-b+1)/(log2e-1));
+			double floored = std::floor(log2nL);
+			double discretization_correction = log2nL / (floored + (nL - std::pow(2,floored)) / std::pow(2,floored));
+			B2norm_ = result * std::pow(discretization_correction,2.5);
+		}
 	}
 	return B2norm_;
 }
