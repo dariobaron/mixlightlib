@@ -24,7 +24,10 @@ class Tree{
 public:
 	Tree(const std::vector<Edge> & edges);
 	Tree(const Edge * ptr, unsigned n);
+	Tree(const Tree & other);
+	Tree(Tree && other);
 	const std::vector<Node>& getNodes() const;
+	std::vector<Edge> getEdgelist() const;
 	template<typename RndEng>
 	static std::vector<Edge> generateYuleEdges(RndEng & rng, unsigned nL);
 	template<typename RndEng>
@@ -48,9 +51,24 @@ Tree::Tree(const std::vector<Edge> & edges) : Tree(edges.data(), edges.size()) {
 
 Tree::Tree(const Edge * ptr, unsigned n) : nodes_(initNodes(ptr,n)), leaves_(initLeaves(nodes_)), B2_(-1), B2norm_(-1), coph_(-1), cophnorm_(-1) {}
 
+Tree::Tree(const Tree & other) : Tree(other.getEdgelist()) {};
+
+Tree::Tree(Tree && other) : Tree(other.getEdgelist()) {};
 
 const std::vector<Node>& Tree::getNodes() const{
 	return nodes_;
+}
+
+
+std::vector<Edge> Tree::getEdgelist() const{
+	std::vector<Edge> edgelist;
+	for (auto & node : nodes_){
+		for (auto child_ptr : node.children()){
+			edgelist.emplace_back(node.id(), child_ptr->id());
+		}
+	}
+	std::sort(edgelist.begin(), edgelist.end());
+	return edgelist;
 }
 
 
@@ -184,7 +202,7 @@ double Tree::computeB2Norm(){
 		double B2 = computeB2();
 		unsigned nL = leaves_.size();
 		auto function = [B2,nL](double b){ return -B2 + 2*(b-1)/(b+0.0918) + std::log2(nL)/b; };
-		RootFinder finder(function, std::log2(nL)/B2, std::log2(nL)/(B2-2));
+		RootFinder finder(function, std::log2(nL)/B2, std::log2(nL)/(B2-2*(1-std::pow(2,1-nL))));
 		double b = finder.root();
 		double log2e = 1 / std::log(2);
 		B2norm_ = std::pow(2, (-b+1)/(log2e-1));
