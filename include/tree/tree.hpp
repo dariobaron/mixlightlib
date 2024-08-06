@@ -17,6 +17,7 @@ class Tree{
 	const std::vector<Node> nodes_;
 	const std::set<Node::ID> leaves_;
 	std::vector<unsigned> depths_;
+	std::vector<unsigned> widths_;
 	std::vector<double> probabilities_;
 	std::vector<unsigned> nL_subtree_;
 	double B2_, B2norm_;
@@ -33,6 +34,7 @@ public:
 	template<typename RndEng>
 	static std::vector<Edge> randomizeEdges(RndEng & rng, const Tree & source);
 	std::vector<unsigned>& computeDepths();
+	std::vector<unsigned>& computeWidths();
 	std::vector<double>& computeProbabilities();
 	std::vector<unsigned>& computeNLeavesSubtree();
 	double computeB2();
@@ -139,6 +141,25 @@ std::vector<unsigned>& Tree::computeDepths(){
 		}
 	}
 	return depths_;
+}
+
+
+std::vector<unsigned>& Tree::computeWidths(){
+	if (widths_.size() == 0){
+		widths_.push_back(1);
+		std::vector<const Node*> this_level = nodes_[0].children();
+		std::vector<const Node*> next_level;
+		while (this_level.size()){
+			widths_.push_back(this_level.size());
+			for (const Node * node_ptr : this_level){
+				auto tmp = node_ptr->children();
+				next_level.insert(next_level.end(), tmp.begin(), tmp.end());
+			}
+			this_level = next_level;
+			next_level.clear();
+		}
+	}
+	return widths_;
 }
 
 
