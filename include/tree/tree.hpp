@@ -231,7 +231,7 @@ double Tree::computeB2Norm(){
 		else{
 			double log2nL = std::log2(nL);
 			auto function = [B2,log2nL](double b){ return -B2 + 2*(b-1)/(b+0.0918) + log2nL/b; };
-			RootFinder finder(function, log2nL/B2, log2nL/(B2-2*(1-std::pow(2,1-nL))));
+			RootFinder finder(function, log2nL/B2, log2nL/(B2-2*(1-std::pow(2,1.-nL))));
 			double b = finder.root();
 			double log2e = 1 / std::log(2);
 			double result = std::pow(2, (-b+1)/(log2e-1));
