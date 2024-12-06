@@ -108,6 +108,11 @@ public:
 		return std::inner_product(x_.begin(), x_.end(), x_.begin(), 0.);
 	};
 
+	// low-level access
+	const double * data() const{
+		return x_.data();
+	}
+
 private:
 	void checkDimensionality() const{
 		if (x_.size() != DIM){
