@@ -16,7 +16,10 @@ class LookupTable{
 	};
 	std::vector<Element> elements_;
 public:
+	LookupTable() = default;
 	LookupTable(const std::vector<double> & xs, const std::vector<double> & fs);
+	double a() const;
+	double b() const;
 	double evaluate(double x) const;
 	double operator()(double x) const;
 	void extend(const LookupTable & other);
@@ -39,6 +42,14 @@ LookupTable::LookupTable(const std::vector<double> & xs, const std::vector<doubl
 		elements_[i].x = xs[i];
 		elements_[i].f = fs[i];
 	}
+}
+
+
+double LookupTable::a() const{
+	return elements_.front().x;
+}
+double LookupTable::b() const{
+	return elements_.back().x;
 }
 
 
