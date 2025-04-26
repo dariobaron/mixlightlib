@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <set>
+#include <map>
 #include <stdexcept>
 #include <algorithm>
 #include <numeric>
@@ -33,6 +34,8 @@ public:
 	static std::vector<Edge> generateYuleEdges(RndEng & rng, unsigned nL);
 	template<typename RndEng>
 	static std::vector<Edge> randomizeEdges(RndEng & rng, const Tree & source);
+	template<typename FlexEdge,typename NameType>
+	static std::vector<Edge> renameEdgelist(std::vector<FlexEdge> edges, NameType root);
 	std::vector<unsigned>& computeDepths();
 	std::vector<unsigned>& computeWidths();
 	std::vector<double>& computeProbabilities();
@@ -125,6 +128,71 @@ std::vector<Edge> Tree::randomizeEdges(RngEng & rng, const Tree & source){
 	}
 	std::sort(edges.begin(), edges.end());
 	return edges;
+}
+
+
+template<typename FlexEdge,typename NameType>
+std::vector<Edge> Tree::renameEdgelist(std::vector<FlexEdge> edges, NameType root){
+	auto copy = edges;
+	bool root_notin_edges = true;
+	for (const auto & edge : edges){
+		if (edge.parent == root){
+			root_notin_edges = false;
+		}
+		if (edge.child == root){
+			throw std::invalid_argument("Root requested cannot be a child");
+		}
+	}
+	if (root_notin_edges){
+		throw std::invalid_argument("Root requested is not in the edgelist");
+	}
+	auto initial_size = edges.size();
+	std::map<NameType,Node::ID> node_names;
+	node_names[root] = 0;
+	std::vector<Edge> renamed_edges;
+	renamed_edges.reserve(edges.size());
+	while (edges.size()){
+		std::vector<unsigned> to_erase;
+		to_erase.reserve(edges.size());
+		for (unsigned i = 0; i < edges.size(); ++i){
+			auto it_first = node_names.find(edges[i].parent);
+			if (it_first != node_names.end()){
+				auto it_second = node_names.find(edges[i].child);
+				if (it_second == node_names.end()){
+					node_names[edges[i].child] = node_names.size();
+				}
+				renamed_edges.emplace_back(node_names[edges[i].parent], node_names[edges[i].child]);
+				to_erase.push_back(i);
+			}
+		}
+		eraseWithoutOrder(edges, to_erase);
+	}
+	if (renamed_edges.size() != initial_size){
+		std::cout << "renamed_edges.size()=" << renamed_edges.size() << " edges.size()=" << initial_size << std::endl;
+		throw std::runtime_error("Error in the algorithm");
+	}
+	if (node_names.size() != initial_size + 1){
+		std::set<Edge> edges_set;
+		for (const auto & edge : copy){
+			auto [it, inserted] = edges_set.insert(edge);
+			if (!inserted){
+				std::cout << "duplicate edge found=" << edge.parent << " -> " << edge.child << std::endl;
+				auto it = edges_set.find(edge);
+				std::cout << "duplicate edge found=" << it->parent << " -> " << it->child << std::endl;
+			}
+			if (node_names.find(edge.parent) == node_names.end()){
+				std::cout << "parent not found=" << edge.parent << std::endl;
+			}
+			if (node_names.find(edge.child) == node_names.end()){
+				std::cout << "child not found=" << edge.child << std::endl;
+			}
+		}
+		std::cout << " edges_set.size()=" << edges_set.size() << std::endl;
+		std::cout << "node_names.size()=" << node_names.size() << " initial_size=" << initial_size << std::endl;
+		throw std::runtime_error("Error in the algorithm");
+	}
+	std::sort(renamed_edges.begin(), renamed_edges.end());
+	return renamed_edges;
 }
 
 

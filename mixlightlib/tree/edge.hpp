@@ -13,5 +13,8 @@ struct Edge{
 
 
 bool operator<(const Edge & lhs, const Edge & rhs){
+	if (lhs.child == rhs.child){
+		return lhs.parent < rhs.parent;
+	}
 	return lhs.child < rhs.child;
 }
