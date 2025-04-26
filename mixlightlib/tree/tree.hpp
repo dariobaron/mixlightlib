@@ -133,7 +133,6 @@ std::vector<Edge> Tree::randomizeEdges(RngEng & rng, const Tree & source){
 
 template<typename FlexEdge,typename NameType>
 std::vector<Edge> Tree::renameEdgelist(std::vector<FlexEdge> edges, NameType root){
-	auto copy = edges;
 	bool root_notin_edges = true;
 	for (const auto & edge : edges){
 		if (edge.parent == root){
@@ -146,7 +145,6 @@ std::vector<Edge> Tree::renameEdgelist(std::vector<FlexEdge> edges, NameType roo
 	if (root_notin_edges){
 		throw std::invalid_argument("Root requested is not in the edgelist");
 	}
-	auto initial_size = edges.size();
 	std::map<NameType,Node::ID> node_names;
 	node_names[root] = 0;
 	std::vector<Edge> renamed_edges;
@@ -166,30 +164,6 @@ std::vector<Edge> Tree::renameEdgelist(std::vector<FlexEdge> edges, NameType roo
 			}
 		}
 		eraseWithoutOrder(edges, to_erase);
-	}
-	if (renamed_edges.size() != initial_size){
-		std::cout << "renamed_edges.size()=" << renamed_edges.size() << " edges.size()=" << initial_size << std::endl;
-		throw std::runtime_error("Error in the algorithm");
-	}
-	if (node_names.size() != initial_size + 1){
-		std::set<Edge> edges_set;
-		for (const auto & edge : copy){
-			auto [it, inserted] = edges_set.insert(edge);
-			if (!inserted){
-				std::cout << "duplicate edge found=" << edge.parent << " -> " << edge.child << std::endl;
-				auto it = edges_set.find(edge);
-				std::cout << "duplicate edge found=" << it->parent << " -> " << it->child << std::endl;
-			}
-			if (node_names.find(edge.parent) == node_names.end()){
-				std::cout << "parent not found=" << edge.parent << std::endl;
-			}
-			if (node_names.find(edge.child) == node_names.end()){
-				std::cout << "child not found=" << edge.child << std::endl;
-			}
-		}
-		std::cout << " edges_set.size()=" << edges_set.size() << std::endl;
-		std::cout << "node_names.size()=" << node_names.size() << " initial_size=" << initial_size << std::endl;
-		throw std::runtime_error("Error in the algorithm");
 	}
 	std::sort(renamed_edges.begin(), renamed_edges.end());
 	return renamed_edges;
