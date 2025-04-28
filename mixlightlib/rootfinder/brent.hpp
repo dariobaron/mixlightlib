@@ -12,7 +12,7 @@ double brent(Func f, double a, double b, Stopper * stopper){
 	double c = a;
 	double fc = f(c);
 	bool flag = true;
-	double s, d, fs, delta;
+	double s=0, d, fs, delta;
 	while(!(*stopper)(a, b)){
 		delta = std::abs(a - b) / 2;
 		if ((fa == fc) || (fb == fc))	{	s = b - fb * (b - a) / (fb - fa);	}
