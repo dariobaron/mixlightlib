@@ -6,15 +6,20 @@
 class Node{
 public:
 	using ID = unsigned;
+	using NAME = unsigned;
 private:
 	ID id_;
+	NAME name_;
 	Node * parent_;
 	std::vector<Node*> children_;
 public:
 	Node();
 	Node(ID id);
+	Node(ID id, NAME name);
 	ID id() const;
 	void id(ID i);
+	NAME name() const;
+	void name(NAME n);
 	const Node * parent() const;
 	void parent(Node * p);
 	unsigned nChildren() const;
@@ -26,10 +31,13 @@ public:
 
 
 
-Node::Node() : id_(-1), parent_(nullptr) {}
+Node::Node() : id_(-1), name_(-1), parent_(nullptr) {}
 
 
-Node::Node(ID id) : id_(id), parent_(nullptr) {}
+Node::Node(ID id) : id_(id), name_(id), parent_(nullptr) {}
+
+
+Node::Node(ID id, NAME name) : id_(id), name_(name), parent_(nullptr) {}
 
 
 Node::ID Node::id() const{
@@ -38,6 +46,15 @@ Node::ID Node::id() const{
 
 void Node::id(ID i){
 	id_ = i;
+}
+
+
+Node::NAME Node::name() const{
+	return name_;
+}
+
+void Node::name(NAME name){
+	name_ = name;
 }
 
 

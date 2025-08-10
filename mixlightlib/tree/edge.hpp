@@ -1,12 +1,13 @@
 #pragma once
 
 #include <tuple>
+#include "node.hpp"
 
 
 struct Edge{
-	unsigned parent;
-	unsigned child;
-	Edge(unsigned p, unsigned c) : parent(p), child(c) {};
+	Node::NAME parent;
+	Node::NAME child;
+	Edge(Node::NAME p, Node::NAME c) : parent(p), child(c) {};
 	friend bool operator<(const Edge & lhs, const Edge & rhs);
 };
 

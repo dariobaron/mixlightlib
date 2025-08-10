@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <set>
+#include <unordered_set>
 #include <map>
 #include <stdexcept>
 #include <algorithm>
@@ -15,6 +16,7 @@
 
 
 class Tree{
+	const std::map<Node::NAME,Node::ID> name_to_id_;
 	const std::vector<Node> nodes_;
 	const std::set<Node::ID> leaves_;
 	std::vector<unsigned> depths_;
@@ -29,13 +31,17 @@ public:
 	Tree(const Tree & other);
 	Tree(Tree && other);
 	const std::vector<Node>& getNodes() const;
+	std::vector<Node::NAME> getNodeNames() const;
 	std::vector<Edge> getEdgelist() const;
+	template<typename FlexEdge>
+	static Node::NAME checkTreeIntegrity(const std::vector<FlexEdge> & edges);
+	template<typename FlexEdge>
+	static std::map<Node::NAME,Node::ID> getMapperNameToId(std::vector<FlexEdge> edges);
 	template<typename RndEng>
 	static std::vector<Edge> generateYuleEdges(RndEng & rng, unsigned nL);
 	template<typename RndEng>
 	static std::vector<Edge> randomizeEdges(RndEng & rng, const Tree & source);
-	template<typename FlexEdge,typename NameType>
-	static std::vector<Edge> renameEdgelist(std::vector<FlexEdge> edges, NameType root);
+	Tree prune(const std::vector<Node::ID> & nodes_to_keep);
 	std::vector<unsigned>& computeDepths();
 	std::vector<unsigned>& computeWidths();
 	std::vector<double>& computeProbabilities();
@@ -46,7 +52,7 @@ public:
 	double computeCopheneticNorm();
 	std::vector<unsigned> computeNChildrenPerNode() const;
 private:
-	std::vector<Node> initNodes(const Edge * ptr, unsigned n);
+	std::vector<Node> initNodes(const Edge * ptr, const unsigned n);
 	std::set<Node::ID> initLeaves(const std::vector<Node> & nodes);
 };
 
@@ -54,7 +60,7 @@ private:
 Tree::Tree(const std::vector<Edge> & edges) : Tree(edges.data(), edges.size()) {};
 
 
-Tree::Tree(const Edge * ptr, unsigned n) : nodes_(initNodes(ptr,n)), leaves_(initLeaves(nodes_)), B2_(-1), B2norm_(-1), coph_(-1), cophnorm_(-1) {}
+Tree::Tree(const Edge * ptr, unsigned n) : name_to_id_(getMapperNameToId(std::vector<Edge>(ptr, ptr+n))), nodes_(initNodes(ptr,n)), leaves_(initLeaves(nodes_)), B2_(-1), B2norm_(-1), coph_(-1), cophnorm_(-1) {}
 
 Tree::Tree(const Tree & other) : Tree(other.getEdgelist()) {};
 
@@ -65,15 +71,84 @@ const std::vector<Node>& Tree::getNodes() const{
 }
 
 
+std::vector<Node::NAME> Tree::getNodeNames() const{
+	std::vector<Node::NAME> names(nodes_.size());
+	for (unsigned i = 0; i < nodes_.size(); ++i){
+		names[i] = nodes_[i].name();
+	}
+	return names;
+}
+
+
 std::vector<Edge> Tree::getEdgelist() const{
 	std::vector<Edge> edgelist;
 	for (auto & node : nodes_){
 		for (auto child_ptr : node.children()){
-			edgelist.emplace_back(node.id(), child_ptr->id());
+			edgelist.emplace_back(node.name(), child_ptr->name());
 		}
 	}
 	std::sort(edgelist.begin(), edgelist.end());
 	return edgelist;
+}
+
+
+template<typename FlexEdge>
+Node::NAME Tree::checkTreeIntegrity(const std::vector<FlexEdge> & edges){
+	std::unordered_set<Node::NAME> root_candidates;
+	std::unordered_set<Node::NAME> non_roots;
+	std::unordered_set<Node::NAME> convergent_nodes;
+	for (auto & edge : edges){
+		auto [it, inserted] = non_roots.insert(edge.child);
+		if (!inserted){
+			convergent_nodes.insert(edge.child);
+		}
+		root_candidates.erase(edge.child);
+		if (!non_roots.contains(edge.parent)){
+			root_candidates.insert(edge.parent);
+		}
+	}
+	if (root_candidates.size() > 1){
+		std::string error_message = "Tree edgelist must have a single root node, but candidates are:";
+		for (const auto & candidate : root_candidates){
+			error_message += " " + std::to_string(candidate);
+		}
+		throw std::invalid_argument(error_message);
+	}
+	if (root_candidates.size() == 0){
+		throw std::invalid_argument("Tree edgelist cannot be have loops");
+	}
+	if (convergent_nodes.size() > 0){
+		std::string error_message = "Tree edgelist cannot have convergent branches, but found at nodes:";
+		for (const auto & node : convergent_nodes){
+			error_message += " " + std::to_string(node);
+		}
+		throw std::invalid_argument(error_message);
+	}
+	return *(root_candidates.begin());
+}
+
+
+template<typename FlexEdge>
+std::map<Node::NAME,Node::ID> Tree::getMapperNameToId(std::vector<FlexEdge> edges){
+	Node::NAME root = checkTreeIntegrity(edges);
+	std::map<Node::NAME,Node::ID> name_to_id;
+	name_to_id[root] = 0;
+	while (edges.size()){
+		std::vector<unsigned> to_erase;
+		to_erase.reserve(edges.size());
+		for (unsigned i = 0; i < edges.size(); ++i){
+			auto it_first = name_to_id.find(edges[i].parent);
+			if (it_first != name_to_id.end()){
+				auto it_second = name_to_id.find(edges[i].child);
+				if (it_second == name_to_id.end()){
+					name_to_id[edges[i].child] = name_to_id.size();
+				}
+				to_erase.push_back(i);
+			}
+		}
+		eraseWithoutOrder(edges, to_erase);
+	}
+	return name_to_id;
 }
 
 
@@ -131,42 +206,35 @@ std::vector<Edge> Tree::randomizeEdges(RngEng & rng, const Tree & source){
 }
 
 
-template<typename FlexEdge,typename NameType>
-std::vector<Edge> Tree::renameEdgelist(std::vector<FlexEdge> edges, NameType root){
-	bool root_notin_edges = true;
-	for (const auto & edge : edges){
-		if (edge.parent == root){
-			root_notin_edges = false;
-		}
-		if (edge.child == root){
-			throw std::invalid_argument("Root requested cannot be a child");
-		}
+Tree Tree::prune(const std::vector<Node::NAME> & nodes_to_keep){
+	std::set<Node::NAME> nodes_to_keep_unique(nodes_to_keep.begin(), nodes_to_keep.end());
+	//<< check that all the nodes to keep belong to this tree
+	for (auto name : nodes_to_keep_unique){
+		name_to_id_.at(name);
 	}
-	if (root_notin_edges){
-		throw std::invalid_argument("Root requested is not in the edgelist");
-	}
-	std::map<NameType,Node::ID> node_names;
-	node_names[root] = 0;
-	std::vector<Edge> renamed_edges;
-	renamed_edges.reserve(edges.size());
-	while (edges.size()){
-		std::vector<unsigned> to_erase;
-		to_erase.reserve(edges.size());
-		for (unsigned i = 0; i < edges.size(); ++i){
-			auto it_first = node_names.find(edges[i].parent);
-			if (it_first != node_names.end()){
-				auto it_second = node_names.find(edges[i].child);
-				if (it_second == node_names.end()){
-					node_names[edges[i].child] = node_names.size();
-				}
-				renamed_edges.emplace_back(node_names[edges[i].parent], node_names[edges[i].child]);
-				to_erase.push_back(i);
+	//>>
+	std::vector<Edge> new_edges;
+	for (Node::NAME name : nodes_to_keep_unique){
+		const Node & node = nodes_[name_to_id_.at(name)];
+		const Node * parent_ptr = node.parent();
+		if (!parent_ptr){ // if this node is the root of the tree
+			continue;
+		}
+		auto iter = nodes_to_keep_unique.find(parent_ptr->name());
+		while (iter == nodes_to_keep_unique.end()){
+			parent_ptr = parent_ptr->parent();
+			if (!parent_ptr){ // if this node is the root of the pruned tree
+				break;
 			}
+			iter = nodes_to_keep_unique.find(parent_ptr->name());
 		}
-		eraseWithoutOrder(edges, to_erase);
+		if (!parent_ptr){
+			continue;
+		}
+		new_edges.emplace_back(parent_ptr->name(), name);
 	}
-	std::sort(renamed_edges.begin(), renamed_edges.end());
-	return renamed_edges;
+	std::sort(new_edges.begin(), new_edges.end());
+	return Tree(new_edges);
 }
 
 
@@ -318,19 +386,20 @@ std::vector<unsigned> Tree::computeNChildrenPerNode() const{
 }
 
 
-std::vector<Node> Tree::initNodes(const Edge * ptr, unsigned n){
+std::vector<Node> Tree::initNodes(const Edge * ptr, const unsigned n){
 	std::vector<Node> nodes(n+1);
-	if (ptr->parent != 0){
-		throw std::runtime_error("Edgelist must be begin with the root node Id = 0");
-	}
-	nodes[0].id(0);
 	for (unsigned i = 0; i < n; ++i){
-		Edge edge = ptr[i];
-		if (edge.parent >= edge.child)	{	throw std::runtime_error("Tree edgelist ill-formed!");	}
-		else if (edge.child > n)		{	throw std::runtime_error("Tree edgelist ill-formed!");	}
-		nodes[edge.child].id(edge.child);
-		nodes[edge.parent].child(&nodes[edge.child]);
-		nodes[edge.child].parent(&nodes[edge.parent]);
+		const Edge edge = ptr[i];
+		Node::ID parent_id = name_to_id_.at(edge.parent);
+		Node::ID child_id = name_to_id_.at(edge.child);
+		Node & parent = nodes[parent_id];
+		Node & child = nodes[child_id];
+		parent.id(parent_id);
+		parent.name(edge.parent);
+		parent.child(&child);
+		child.id(child_id);
+		child.name(edge.child);
+		child.parent(&parent);
 	}
 	for (unsigned i = 0; i < nodes.size(); ++i){
 		if (nodes[i].id() != i)	{	throw std::runtime_error("Edgelist is incomplete, some nodes are missing");	}
