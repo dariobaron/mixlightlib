@@ -22,6 +22,7 @@ class Tree{
 	std::vector<unsigned> depths_;
 	std::vector<unsigned> widths_;
 	std::vector<double> probabilities_;
+	std::vector<unsigned> subtree_size_;
 	std::vector<unsigned> nL_subtree_;
 	double B2_, B2norm_;
 	unsigned long coph_; double cophnorm_;
@@ -45,6 +46,7 @@ public:
 	std::vector<unsigned>& computeDepths();
 	std::vector<unsigned>& computeWidths();
 	std::vector<double>& computeProbabilities();
+	std::vector<unsigned>& computeSubtreeSizes();
 	std::vector<unsigned>& computeNLeavesSubtree();
 	double computeB2();
 	double computeB2Norm();
@@ -286,6 +288,21 @@ std::vector<double>& Tree::computeProbabilities(){
 		}
 	}
 	return probabilities_;
+}
+
+
+std::vector<unsigned>& Tree::computeSubtreeSizes(){
+	if (subtree_size_.size() != nodes_.size()){
+		subtree_size_ = std::vector<unsigned>(nodes_.size(), 0);
+		for (auto l : leaves_){
+			const Node* parent_ptr = nodes_[l].parent();
+			while (parent_ptr){
+				subtree_size_[parent_ptr->id()] += 1;
+				parent_ptr = parent_ptr->parent();
+			}
+		}
+	}
+	return subtree_size_;
 }
 
 
