@@ -4,6 +4,7 @@
 #include <set>
 #include <unordered_set>
 #include <map>
+#include <stack>
 #include <stdexcept>
 #include <algorithm>
 #include <numeric>
@@ -293,13 +294,35 @@ std::vector<double>& Tree::computeProbabilities(){
 
 std::vector<unsigned>& Tree::computeSubtreeSizes(){
 	if (subtree_size_.size() != nodes_.size()){
-		subtree_size_ = std::vector<unsigned>(nodes_.size(), 0);
-		for (auto l : leaves_){
-			const Node* parent_ptr = nodes_[l].parent();
-			while (parent_ptr){
-				subtree_size_[parent_ptr->id()] += 1;
-				parent_ptr = parent_ptr->parent();
+		std::map<Node::ID,unsigned> subtrees;
+		for (Node::ID leaf : leaves_){
+			subtrees[leaf] = 0;
+		}
+		std::stack<Node::ID> to_process;
+		to_process.push(0);
+		while (to_process.size() > 0){
+			Node::ID current_id = to_process.top();
+			const Node& current = nodes_[current_id];
+			bool processable = true;
+			for (const Node* child : current.children()){
+				if (!subtrees.contains(child->id())){
+					processable = false;
+					to_process.push(child->id());
+				}
 			}
+			if (processable){
+				to_process.pop();
+				unsigned accumulator = current.nChildren();
+				for (const Node* child : current.children()){
+					accumulator += subtrees.at(child->id());
+				}
+				subtrees[current_id] = accumulator;
+			}
+		}
+		subtree_size_.clear();
+		subtree_size_.reserve(nodes_.size());
+		for (auto & [id, size] : subtrees){
+			subtree_size_.push_back(size);
 		}
 	}
 	return subtree_size_;
