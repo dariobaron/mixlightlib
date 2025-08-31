@@ -54,6 +54,7 @@ public:
 	unsigned long computeCophenetic();
 	double computeCopheneticNorm();
 	std::vector<unsigned> computeNChildrenPerNode() const;
+	unsigned computeDistanceFromAncestor(Node::NAME ancestor, Node::NAME subject) const;
 private:
 	std::vector<Node> initNodes(const Edge * ptr, const unsigned n);
 	std::set<Node::ID> initLeaves(const std::vector<Node> & nodes);
@@ -423,6 +424,20 @@ std::vector<unsigned> Tree::computeNChildrenPerNode() const{
 		nchildren[i] = nodes_[i].nChildren();
 	}
 	return nchildren;
+}
+
+
+unsigned Tree::computeDistanceFromAncestor(Node::NAME ancestor, Node::NAME subject) const{
+	unsigned distance = 1;
+	const Node * parent_ptr = nodes_[name_to_id_.at(subject)].parent();
+	while (parent_ptr->name() != ancestor){
+		++distance;
+		parent_ptr = parent_ptr->parent();
+		if (!parent_ptr){
+			throw std::invalid_argument("The specified ancestor is not an ancestor of the subject");
+		}
+	}
+	return distance;
 }
 
 
